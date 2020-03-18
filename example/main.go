@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v7"
 	"github.com/rushuinet/version_cache"
@@ -10,6 +11,12 @@ import (
 
 type Up struct {
 	Ids []string `form:"ids" json:"ids" binding:"required"`
+}
+
+type InfoB struct {
+	Id         int
+	Key        string
+	CreateTime int64
 }
 
 func main() {
@@ -24,8 +31,13 @@ func main() {
 	}
 
 	config := &version_cache.Option{
-		Redis:               client,
-		Key:                 "test",
+		Redis: client,
+		Key:   "test",
+		LoadFun: func(s string) interface{} {
+			f := &InfoB{}
+			_ = json.Unmarshal([]byte(s), &f)
+			return f
+		},
 		VersionGenerateTime: 60,
 		CheckTime:           15,
 	}
@@ -38,7 +50,7 @@ func main() {
 
 			r := gin.Default()
 			r.GET("/test", func(context *gin.Context) {
-				context.JSON(200, c.Get())
+				context.JSON(200, c.Data())
 			})
 
 			r.GET("/monitor", func(context *gin.Context) {

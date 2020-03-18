@@ -14,7 +14,12 @@ func (c *Cache) firstLoad(verKey string) {
 	for {
 		values, cursor = c.Redis.HScan(c.DataKey(verKey), cursor, "", loadCount).Val()
 		for i := 0; i < len(values); i += 2 {
-			c.use.Set(values[i], values[i+1])
+			if c.LoadFun != nil {
+				c.use.Set(values[i], c.LoadFun(values[i+1]))
+
+			} else {
+				c.use.Set(values[i], values[i+1])
+			}
 		}
 		if cursor < 1 {
 			break
@@ -82,7 +87,12 @@ func (c *Cache) load(verKey string) {
 	for {
 		values, cursor = c.Redis.HScan(c.DataKey(verKey), cursor, "", loadCount).Val()
 		for i := 0; i < len(values); i += 2 {
-			c.new.Set(values[i], values[i+1])
+			if c.LoadFun != nil {
+				c.new.Set(values[i], c.LoadFun(values[i+1]))
+
+			} else {
+				c.new.Set(values[i], values[i+1])
+			}
 		}
 		if cursor < 1 {
 			break

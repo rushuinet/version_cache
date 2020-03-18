@@ -1,12 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/go-redis/redis/v7"
 	"github.com/rushuinet/version_cache"
 	"log"
 	"strconv"
 	"time"
 )
+
+type Info struct {
+	Id         int
+	Key        string
+	CreateTime int64
+}
 
 func main() {
 	client := redis.NewClient(&redis.Options{
@@ -27,8 +34,15 @@ func main() {
 	}
 	cache := version_cache.New(config)
 	cache.Generate(func(key string) {
-		for i := 0; i < 10; i++ {
-			cache.Redis.HSet(key, strconv.Itoa(i), "aa"+strconv.Itoa(i)+version_cache.Int64ToStr(time.Now().Unix()))
+		for i := 0; i < 5; i++ {
+			info := &Info{
+				Id:         i,
+				Key:        key,
+				CreateTime: time.Now().Unix(),
+			}
+			data, _ := json.Marshal(info)
+			cache.Redis.HSet(key, strconv.Itoa(i), data)
+			time.Sleep(1 * time.Second)
 		}
 	})
 
